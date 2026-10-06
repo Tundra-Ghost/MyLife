@@ -191,6 +191,11 @@ pub fn snooze(conn: &Connection, id: &str, option: Snooze, now: DateTime<Utc>) -
     get(conn, id)
 }
 
+/// Local midnight at the start of `date`, in UTC.
+pub fn local_midnight(date: chrono::NaiveDate) -> DateTime<Utc> {
+    local_at(date, 0, 0)
+}
+
 fn local_at(date: chrono::NaiveDate, h: u32, m: u32) -> DateTime<Utc> {
     USER_TZ
         .from_local_datetime(&date.and_time(NaiveTime::from_hms_opt(h, m, 0).unwrap()))

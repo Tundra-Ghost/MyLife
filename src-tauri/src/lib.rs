@@ -215,6 +215,69 @@ fn rule_delete(state: State<AppState>, id: String) -> CmdResult<()> {
     with_db(&state, |c| rules::store::delete(c, &id))
 }
 
+#[derive(Serialize)]
+struct BackupInfo {
+    dir: String,
+    last_backup_at: Option<String>,
+    files: Vec<db::backup::BackupFile>,
+}
+
+#[tauri::command]
+fn backup_info(state: State<AppState>) -> CmdResult<BackupInfo> {
+    with_db(&state, |c| {
+        let dir = db::backup::backup_dir(c, &state.paths)?;
+        Ok(BackupInfo {
+            dir: dir.to_string_lossy().to_string(),
+            last_backup_at: db::backup::last_backup_at(c)?,
+            files: db::backup::list(&dir)?,
+        })
+    })
+}
+
+#[tauri::command]
+fn backup_now(state: State<AppState>) -> CmdResult<()> {
+    with_db(&state, |c| db::backup::backup_now(c, &state.paths, "manual").map(|_| ()))
+}
+
+#[tauri::command]
+fn backup_set_dir(state: State<AppState>, dir: String) -> CmdResult<()> {
+    with_db(&state, |c| db::backup::set_backup_dir(c, std::path::Path::new(&dir)))
+}
+
+/// Restores a backup by file name from the backup folder.
+#[tauri::command]
+fn backup_restore(state: State<AppState>, name: String, password: String) -> CmdResult<()> {
+    let password = Zeroizing::new(password);
+    let mut guard = state.conn.lock().map_err(|_| "App state is broken. Restart MyLife.".to_string())?;
+    let conn = guard.as_ref().ok_or("Locked.")?;
+    let dir = db::backup::backup_dir(conn, &state.paths).map_err(err)?;
+    // Only a plain file name, so the path can't point outside the folder.
+    if name.contains(['/', '\\']) || name.contains("..") {
+        return Err("That isn't a MyLife backup.".into());
+    }
+    db::backup::restore(&mut guard, &state.paths, &dir.join(name), &password).map_err(err)
+}
+
+#[tauri::command]
+fn review_set_must_do(state: State<AppState>, task_id: String) -> CmdResult<()> {
+    with_db(&state, |c| modules::review::set_must_do(c, db::ids::local_today(Utc::now()), &task_id))
+}
+
+#[tauri::command]
+fn review_skip_brief(state: State<AppState>) -> CmdResult<()> {
+    with_db(&state, |c| modules::review::skip_brief(c, db::ids::local_today(Utc::now())))
+}
+
+#[tauri::command]
+fn review_shutdown(state: State<AppState>) -> CmdResult<modules::review::Shutdown> {
+    with_db(&state, |c| modules::review::shutdown(c, Utc::now()))
+}
+
+#[tauri::command]
+fn review_set_top3(state: State<AppState>, task_ids: Vec<String>) -> CmdResult<()> {
+    with_db(&state, |c| modules::review::set_top3(c, db::ids::local_today(Utc::now()), &task_ids))
+}
+
 /// Spec: Ctrl+Shift+Space opens quick capture from any app.
 fn quick_capture_shortcut() -> Shortcut {
     Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space)
@@ -281,6 +344,14 @@ pub fn run() {
             rule_create,
             rule_set_enabled,
             rule_delete,
+            backup_info,
+            backup_now,
+            backup_set_dir,
+            backup_restore,
+            review_set_must_do,
+            review_skip_brief,
+            review_shutdown,
+            review_set_top3,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MyLife");

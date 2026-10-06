@@ -31,3 +31,8 @@ Tanner can change any of these. Newest at the bottom.
 | 24 | 2026-10-06 | Reminder Done | Done on a reminder closes the reminder only. Finishing a task closes its reminders. | Keeps "I saw it" separate from "I did it". |
 | 25 | 2026-10-06 | Rules in Phase 1 | Runs `time` and `offset` (task due date) triggers, and `notify` and `create_task` actions. Other types are saved but run when their modules ship. | Matches the Phase 1 gate. |
 | 26 | 2026-10-06 | Snooze check-in | After 5 snoozes the reminder asks: too big, wrong time, or not needed. | Spec. |
+| 27 | 2026-10-06 | Backups | Daily backup on the first agent pass each day, to the folder picked in Settings (default: the app's `backups` folder). Keeps the last 30 daily backups. Manual and safety backups are never pruned. | Spec asks for daily backups to a chosen folder. |
+| 28 | 2026-10-06 | Restore | Restore asks for the app password, checks the backup opens, backs up the current data, then swaps. An older backup is upgraded by the normal migrations. | Spec build rule 6. |
+| 29 | 2026-10-06 | Daily brief contents | Phase 1 brief shows today's calendar, due count, reminders, Catch-up, then asks for the one must-do. Weather, bills, and goal steps join when those modules ship. | Those modules are later phases. |
+| 30 | 2026-10-06 | Brief and shutdown timing | "Start your day" shows on Today until done or skipped, before 5 PM. "Shut down for the day" shows after 5 PM. Both are always in the Top 3 header. | Spec gives no times. |
+| 31 | 2026-10-06 | Top 3 pins | The must-do and last night's top 3 picks lead the Top 3. The rest fill from due dates. | Closes the gap in decision 4. |

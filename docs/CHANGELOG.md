@@ -1,5 +1,13 @@
 # Changelog
 
+## Phase 1, step 4: Backups and daily flows
+
+- Daily encrypted backup to a folder you pick. Settings screen lists backups.
+- Restore from any backup. Asks for the app password and backs up current data first.
+- Daily brief: today's calendar and due items, then "What is your one must-do today?"
+- Evening shutdown: wins, move what's left to tomorrow, pick tomorrow's top 3.
+- The must-do and tomorrow's picks lead the Top 3.
+
 ## Phase 1, step 3: Reminders
 
 - Tray agent checks rules and reminders every 60 seconds. Starts at Windows login.

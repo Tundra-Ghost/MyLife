@@ -13,6 +13,7 @@ use tauri::{
     AppHandle, Emitter, Manager, WindowEvent,
 };
 
+use crate::db::backup;
 use crate::rules::runner;
 use crate::scheduler::reminders;
 use crate::AppState;
@@ -39,6 +40,10 @@ pub fn tick(app: &AppHandle) {
         let Ok(guard) = state.conn.lock() else { return };
         let Some(conn) = guard.as_ref() else { return };
         let now = Utc::now();
+        // Spec: daily encrypted backup. A failed backup must not stop reminders.
+        if let Err(e) = backup::daily_if_due(conn, &state.paths, now) {
+            eprintln!("Daily backup failed: {e}");
+        }
         let result = runner::run(conn, now).and_then(|_| reminders::deliver(conn, now));
         match result {
             Ok(n) => n,

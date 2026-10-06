@@ -8,9 +8,9 @@ use chrono::{DateTime, Duration, TimeZone, Utc};
 use rusqlite::Connection;
 use serde::Serialize;
 
-use super::calendar;
+use super::{calendar, review};
 use super::tasks::{self, Task, TaskView};
-use crate::db::{ids, DbError};
+use crate::db::{ids, settings, DbError};
 
 pub const LIST_LIMIT: usize = 7;
 pub const TOP_COUNT: usize = 3;
@@ -36,6 +36,10 @@ pub struct Today {
     /// How many tasks wait in Catch-up. Shown as a calm count, never a red list.
     pub catch_up_count: usize,
     pub inbox_count: usize,
+    /// The one must-do from the morning brief, if picked. It is also first in `top`.
+    pub must_do_id: Option<String>,
+    pub brief_done: bool,
+    pub shutdown_done: bool,
 }
 
 pub fn build(conn: &Connection, now: DateTime<Utc>) -> Result<Today, DbError> {
@@ -44,7 +48,26 @@ pub fn build(conn: &Connection, now: DateTime<Utc>) -> Result<Today, DbError> {
 
     // Active list is already sorted: soonest due first, then oldest.
     let active = tasks::list(conn, TaskView::Active, now)?;
-    let top: Vec<Task> = active.iter().take(TOP_COUNT).cloned().collect();
+    // Pinned tasks (must-do, then last night's top 3) come first if still open.
+    let pins = review::pinned(conn, today)?;
+    let mut top: Vec<Task> = Vec::new();
+    for id in &pins {
+        if let Ok(t) = tasks::get(conn, id) {
+            if t.status == "active" && top.len() < TOP_COUNT {
+                top.push(t);
+            }
+        }
+    }
+    for t in &active {
+        if top.len() >= TOP_COUNT {
+            break;
+        }
+        if !top.iter().any(|x| x.id == t.id) {
+            top.push(t.clone());
+        }
+    }
+    let must_do_id = settings::get(conn, &format!("must_do:{today_str}"))?;
+    let flags = review::flags(conn, today)?;
 
     // Due today, minus anything already in the top 3.
     let due: Vec<Task> = active
@@ -78,6 +101,9 @@ pub fn build(conn: &Connection, now: DateTime<Utc>) -> Result<Today, DbError> {
         events_more,
         catch_up_count: tasks::list(conn, TaskView::CatchUp, now)?.len(),
         inbox_count: tasks::list(conn, TaskView::Inbox, now)?.len(),
+        must_do_id,
+        brief_done: flags.brief_done,
+        shutdown_done: flags.shutdown_done,
     })
 }
 
@@ -115,6 +141,20 @@ mod tests {
         assert_eq!(t.due_today.len(), LIST_LIMIT);
         assert_eq!(t.due_today_more, 12 - 3 - LIST_LIMIT);
         assert_eq!(t.catch_up_count, 1);
+    }
+
+    #[test]
+    fn pinned_tasks_lead_the_top_three() {
+        let c = test_conn();
+        task(&c, "Soon", Some("2026-10-06"));
+        task(&c, "Later", Some("2026-10-20"));
+        let pick = create(&c, &NewTask { title: "Picked".into(), ..Default::default() }).unwrap();
+        review::set_must_do(&c, ids::local_today(now()), &pick.id).unwrap();
+        let t = build(&c, now()).unwrap();
+        let titles: Vec<_> = t.top.iter().map(|x| x.title.as_str()).collect();
+        assert_eq!(titles, vec!["Picked", "Soon", "Later"]);
+        assert_eq!(t.must_do_id.as_deref(), Some(pick.id.as_str()));
+        assert!(t.brief_done);
     }
 
     #[test]

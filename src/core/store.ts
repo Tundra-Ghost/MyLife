@@ -2,7 +2,7 @@
 // through TanStack Query instead.
 import { create } from "zustand";
 
-export type Screen = "today" | "calendar" | "tasks" | "rules";
+export type Screen = "today" | "calendar" | "tasks" | "rules" | "settings";
 
 interface UiState {
   screen: Screen;

@@ -10,6 +10,7 @@ import { useUi, type Screen } from "./store";
 import { TasksView } from "../modules/tasks/TasksView";
 import { CalendarView } from "../modules/calendar/CalendarView";
 import { RulesView } from "./RulesView";
+import { SettingsView } from "./SettingsView";
 
 const NAV: { id: Screen; label: string; key: string }[] = [
   { id: "today", label: "Today", key: "1" },
@@ -82,6 +83,12 @@ export function Layout() {
           >
             + Quick capture
           </button>
+          <button
+            onClick={() => setScreen("settings")}
+            className={`w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-900 ${screen === "settings" ? "text-slate-100" : "text-slate-500"}`}
+          >
+            Settings
+          </button>
           <button onClick={toggleAgenda} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-900">
             {agendaOpen ? "Hide agenda" : "Show agenda"}
           </button>
@@ -99,8 +106,10 @@ export function Layout() {
           <CalendarView />
         ) : screen === "tasks" ? (
           <TasksView />
-        ) : (
+        ) : screen === "rules" ? (
           <RulesView />
+        ) : (
+          <SettingsView />
         )}
       </main>
 

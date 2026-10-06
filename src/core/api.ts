@@ -62,6 +62,9 @@ export interface Today {
   events_more: number;
   catch_up_count: number;
   inbox_count: number;
+  must_do_id: string | null;
+  brief_done: boolean;
+  shutdown_done: boolean;
 }
 
 export interface CalEvent {
@@ -132,6 +135,18 @@ export interface SavedRule {
   created_at: string;
 }
 
+export interface BackupInfo {
+  dir: string;
+  last_backup_at: string | null;
+  files: { name: string; bytes: number }[];
+}
+
+export interface Shutdown {
+  done_today: Task[];
+  left_over: Task[];
+  candidates: Task[];
+}
+
 export interface AppStatus {
   created: boolean;
   unlocked: boolean;
@@ -164,6 +179,14 @@ export const api = {
   createRule: (rule: Rule) => invoke<SavedRule>("rule_create", { rule }),
   setRuleEnabled: (id: string, enabled: boolean) => invoke<SavedRule>("rule_set_enabled", { id, enabled }),
   deleteRule: (id: string) => invoke<void>("rule_delete", { id }),
+  backupInfo: () => invoke<BackupInfo>("backup_info"),
+  backupNow: () => invoke<void>("backup_now"),
+  setBackupDir: (dir: string) => invoke<void>("backup_set_dir", { dir }),
+  restoreBackup: (name: string, password: string) => invoke<void>("backup_restore", { name, password }),
+  setMustDo: (taskId: string) => invoke<void>("review_set_must_do", { taskId }),
+  skipBrief: () => invoke<void>("review_skip_brief"),
+  shutdown: () => invoke<Shutdown>("review_shutdown"),
+  setTop3: (taskIds: string[]) => invoke<void>("review_set_top3", { taskIds }),
   blockTask: (id: string, startsAt: Date) => invoke<CalEvent>("task_block", { id, startsAt: startsAt.toISOString() }),
 };
 
