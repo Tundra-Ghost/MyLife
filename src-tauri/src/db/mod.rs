@@ -6,6 +6,7 @@
 pub mod backup;
 pub mod ids;
 pub mod migrations;
+pub mod settings;
 
 use rusqlite::Connection;
 use std::path::{Path, PathBuf};

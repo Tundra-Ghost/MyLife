@@ -13,6 +13,7 @@ use super::DbError;
 pub const MIGRATIONS: &[(i64, &str)] = &[
     (1, include_str!("../../../migrations/0001_init.sql")),
     (2, include_str!("../../../migrations/0002_events_archive.sql")),
+    (3, include_str!("../../../migrations/0003_reminders.sql")),
 ];
 
 /// The newest schema version this build knows.

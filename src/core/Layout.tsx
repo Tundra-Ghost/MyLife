@@ -9,11 +9,13 @@ import { TodayView } from "./TodayView";
 import { useUi, type Screen } from "./store";
 import { TasksView } from "../modules/tasks/TasksView";
 import { CalendarView } from "../modules/calendar/CalendarView";
+import { RulesView } from "./RulesView";
 
 const NAV: { id: Screen; label: string; key: string }[] = [
   { id: "today", label: "Today", key: "1" },
   { id: "calendar", label: "Calendar", key: "2" },
   { id: "tasks", label: "Tasks", key: "3" },
+  { id: "rules", label: "Reminders", key: "4" },
 ];
 
 // Modules that are planned but not built yet. Shown dimmed so the map is clear.
@@ -25,7 +27,7 @@ export function Layout() {
   // Shown in the sidebar so you can tell which build is installed.
   const version = useQuery({ queryKey: ["version"], queryFn: getVersion, staleTime: Infinity });
 
-  // Keyboard: Alt+1 to Alt+3 switch screens, Ctrl+N opens quick capture.
+  // Keyboard: Alt+1 to Alt+4 switch screens, Ctrl+N opens quick capture.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.altKey) {
@@ -91,7 +93,15 @@ export function Layout() {
       </nav>
 
       <main className="min-w-0 flex-1 overflow-y-auto p-8">
-        {screen === "today" ? <TodayView /> : screen === "calendar" ? <CalendarView /> : <TasksView />}
+        {screen === "today" ? (
+          <TodayView />
+        ) : screen === "calendar" ? (
+          <CalendarView />
+        ) : screen === "tasks" ? (
+          <TasksView />
+        ) : (
+          <RulesView />
+        )}
       </main>
 
       {/* The calendar already shows the day, so the agenda panel steps aside there. */}

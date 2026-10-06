@@ -25,3 +25,9 @@ Tanner can change any of these. Newest at the bottom.
 | 18 | 2026-10-06 | Time-blocking | Drag a task onto the calendar, or click the task and then click a time. Blocks use the task's estimate, or 30 minutes. Dropping on a month day blocks 9 AM. | Click-to-place also works with no mouse drag. |
 | 19 | 2026-10-06 | Editing repeating events | Edits and deletes apply to every occurrence. Single-occurrence edits can come later. | Keeps step 2 small. |
 | 20 | 2026-10-06 | Event delete | Soft delete through a new `archived_at` column on `events` (migration 0002). | Spec hard rule: deletes are soft. |
+| 21 | 2026-10-06 | Agent after restart | MyLife starts at Windows login (installed builds only) and sits in the tray. Reminders run once the app password is entered. Windows Hello unlock (spec, optional) will remove that step later. | The database is encrypted with the app password, so the agent can't read it before unlock. |
+| 22 | 2026-10-06 | Snooze times | Later today = 3 hours. Tomorrow = 9 AM. This weekend = Saturday 9 AM (next Saturday if it's already the weekend). When I'm free = next open 30 minutes on the calendar, 9 AM to 9 PM, within 7 days. | The spec names the options but not the times. |
+| 23 | 2026-10-06 | Due-date reminders | Starter rule "Task due today" reminds at 9 AM on the due date. Tasks with an exact time remind at that time instead. No reminder is made for a time before the task existed. | Avoids double and stale alerts. |
+| 24 | 2026-10-06 | Reminder Done | Done on a reminder closes the reminder only. Finishing a task closes its reminders. | Keeps "I saw it" separate from "I did it". |
+| 25 | 2026-10-06 | Rules in Phase 1 | Runs `time` and `offset` (task due date) triggers, and `notify` and `create_task` actions. Other types are saved but run when their modules ship. | Matches the Phase 1 gate. |
+| 26 | 2026-10-06 | Snooze check-in | After 5 snoozes the reminder asks: too big, wrong time, or not needed. | Spec. |

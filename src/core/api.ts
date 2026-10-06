@@ -94,6 +94,44 @@ export interface EventInput {
   item_id: string | null;
 }
 
+export interface Reminder {
+  id: string;
+  rule_id: string | null;
+  item_id: string | null;
+  title: string;
+  fire_at: string;
+  ladder_level: number;
+  max_ladder: number;
+  urgent: boolean;
+  snooze_count: number;
+  state: string;
+  last_notified_at: string | null;
+}
+
+export type SnoozeOption = "later_today" | "tomorrow" | "this_weekend" | "when_free";
+
+export type Trigger =
+  | { type: "time"; at?: string | null; rrule?: string | null }
+  | { type: "offset"; event?: string | null; date_field?: string | null; days_before: number }
+  | { type: string; [k: string]: unknown };
+
+export interface Rule {
+  name: string;
+  trigger: Trigger;
+  conditions: unknown[];
+  actions: ({ type: string } & Record<string, unknown>)[];
+  max_ladder: number;
+}
+
+export interface SavedRule {
+  id: string;
+  module: string;
+  enabled: boolean;
+  rule: Rule;
+  last_fired_at: string | null;
+  created_at: string;
+}
+
 export interface AppStatus {
   created: boolean;
   unlocked: boolean;
@@ -119,6 +157,13 @@ export const api = {
   createEvent: (event: EventInput) => invoke<CalEvent>("event_create", { event }),
   updateEvent: (id: string, event: EventInput) => invoke<CalEvent>("event_update", { id, event }),
   archiveEvent: (id: string) => invoke<void>("event_archive", { id }),
+  reminders: () => invoke<Reminder[]>("reminders_active"),
+  reminderDone: (id: string) => invoke<void>("reminder_done", { id }),
+  snooze: (id: string, option: SnoozeOption) => invoke<Reminder>("reminder_snooze", { id, option }),
+  rules: () => invoke<SavedRule[]>("rules_list"),
+  createRule: (rule: Rule) => invoke<SavedRule>("rule_create", { rule }),
+  setRuleEnabled: (id: string, enabled: boolean) => invoke<SavedRule>("rule_set_enabled", { id, enabled }),
+  deleteRule: (id: string) => invoke<void>("rule_delete", { id }),
   blockTask: (id: string, startsAt: Date) => invoke<CalEvent>("task_block", { id, startsAt: startsAt.toISOString() }),
 };
 

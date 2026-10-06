@@ -4,6 +4,8 @@
 //! These are pure functions so they are easy to test. The tray agent
 //! (next Phase 1 step) calls them every 60 seconds.
 
+pub mod reminders;
+
 use chrono::{DateTime, Duration, NaiveTime, TimeZone, Utc};
 use rrule::{RRuleSet, Tz as RTz};
 

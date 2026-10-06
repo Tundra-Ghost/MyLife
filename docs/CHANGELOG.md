@@ -1,5 +1,17 @@
 # Changelog
 
+## Phase 1, step 3: Reminders
+
+- Tray agent checks rules and reminders every 60 seconds. Starts at Windows login.
+- Reminder ladder: quiet (Today only), nudge (one notification), persistent (again after 2 hours, then every 4 hours).
+- Quiet hours 10 PM to 7 AM. Urgent reminders can break through.
+- After sleep, a missed reminder fires once. No backlog.
+- Snooze: later today, tomorrow, this weekend, when I'm free. Check-in question after 5 snoozes.
+- Reminders section on the Today view with Done and Snooze.
+- Reminders screen: add a reminder (once or repeating), switch rules on and off, see when each last fired.
+- Starter rule: "Task due today" at 9 AM. Quick capture times ("at 3pm") remind at that time.
+- Migration 0003: reminder fields and a settings table.
+
 ## Phase 1, step 2: Calendar
 
 - Calendar screen with day, week, and month views. Keys: D, W, M, T for today, arrows to move.

@@ -6,6 +6,7 @@ import { api, type Task } from "./api";
 import { useUi } from "./store";
 import { formatDay } from "./time";
 import { Button, Section, ShortList } from "./ui";
+import { RemindersList } from "./RemindersList";
 import { TaskDetail } from "../modules/tasks/TaskDetail";
 import { TaskRow } from "../modules/tasks/TaskRow";
 
@@ -48,6 +49,8 @@ export function TodayView() {
           Just one thing
         </Button>
       </div>
+
+      <RemindersList />
 
       <Section title="Top 3">
         <ShortList

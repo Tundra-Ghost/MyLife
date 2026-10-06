@@ -16,7 +16,7 @@ use std::sync::Mutex;
 use chrono::{NaiveDate, Utc};
 use rusqlite::Connection;
 use serde::Serialize;
-use tauri::{Manager, State};
+use tauri::{AppHandle, Manager, State};
 use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut, ShortcutState};
 use zeroize::Zeroizing;
 
@@ -24,10 +24,12 @@ use db::{DbError, DbPaths};
 use modules::calendar::{self, Event, EventInput, Occurrence};
 use modules::tasks::{self, NewTask, Task, TaskPatch, TaskView};
 use modules::today::{self, Today};
+use rules::store::SavedRule;
+use scheduler::reminders::{self, Reminder, Snooze};
 
 pub struct AppState {
-    paths: DbPaths,
-    conn: Mutex<Option<Connection>>,
+    pub(crate) paths: DbPaths,
+    pub(crate) conn: Mutex<Option<Connection>>,
 }
 
 /// Commands return plain text errors the UI can show as-is.
@@ -59,20 +61,27 @@ fn app_status(state: State<AppState>) -> CmdResult<AppStatus> {
     Ok(AppStatus { created: state.paths.exists(), unlocked })
 }
 
-#[tauri::command]
-fn create_password(state: State<AppState>, password: String) -> CmdResult<()> {
-    let password = Zeroizing::new(password);
-    let conn = db::create(&state.paths, &password).map_err(err)?;
+/// After the database opens: add starter rules, then run the agent once
+/// so anything missed while locked shows right away.
+fn opened(app: &AppHandle, state: &State<AppState>, conn: Connection) -> CmdResult<()> {
+    rules::store::seed_starters(&conn).map_err(err)?;
     *state.conn.lock().unwrap() = Some(conn);
+    agent::tick(app);
     Ok(())
 }
 
 #[tauri::command]
-fn unlock(state: State<AppState>, password: String) -> CmdResult<()> {
+fn create_password(app: AppHandle, state: State<AppState>, password: String) -> CmdResult<()> {
+    let password = Zeroizing::new(password);
+    let conn = db::create(&state.paths, &password).map_err(err)?;
+    opened(&app, &state, conn)
+}
+
+#[tauri::command]
+fn unlock(app: AppHandle, state: State<AppState>, password: String) -> CmdResult<()> {
     let password = Zeroizing::new(password);
     let conn = db::unlock(&state.paths, &password).map_err(err)?;
-    *state.conn.lock().unwrap() = Some(conn);
-    Ok(())
+    opened(&app, &state, conn)
 }
 
 #[tauri::command]
@@ -168,6 +177,44 @@ fn task_block(state: State<AppState>, id: String, starts_at: String) -> CmdResul
     with_db(&state, |c| calendar::block_task(c, &id, &starts_at))
 }
 
+#[tauri::command]
+fn reminders_active(state: State<AppState>) -> CmdResult<Vec<Reminder>> {
+    with_db(&state, |c| reminders::active(c, Utc::now()))
+}
+
+/// Marks a reminder done. If it belongs to a task, the task stays as is.
+#[tauri::command]
+fn reminder_done(state: State<AppState>, id: String) -> CmdResult<()> {
+    with_db(&state, |c| reminders::set_state(c, &id, "done"))
+}
+
+#[tauri::command]
+fn reminder_snooze(state: State<AppState>, id: String, option: Snooze) -> CmdResult<Reminder> {
+    with_db(&state, |c| reminders::snooze(c, &id, option, Utc::now()))
+}
+
+#[tauri::command]
+fn rules_list(state: State<AppState>) -> CmdResult<Vec<SavedRule>> {
+    with_db(&state, rules::store::list)
+}
+
+#[tauri::command]
+fn rule_create(app: AppHandle, state: State<AppState>, rule: rules::Rule) -> CmdResult<SavedRule> {
+    let saved = with_db(&state, |c| rules::store::create(c, "tasks", &rule))?;
+    agent::tick(&app);
+    Ok(saved)
+}
+
+#[tauri::command]
+fn rule_set_enabled(state: State<AppState>, id: String, enabled: bool) -> CmdResult<SavedRule> {
+    with_db(&state, |c| rules::store::set_enabled(c, &id, enabled))
+}
+
+#[tauri::command]
+fn rule_delete(state: State<AppState>, id: String) -> CmdResult<()> {
+    with_db(&state, |c| rules::store::delete(c, &id))
+}
+
 /// Spec: Ctrl+Shift+Space opens quick capture from any app.
 fn quick_capture_shortcut() -> Shortcut {
     Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space)
@@ -194,6 +241,13 @@ pub fn run() {
             std::fs::create_dir_all(&dir)?;
             app.manage(AppState { paths: DbPaths::in_dir(&dir), conn: Mutex::new(None) });
             agent::setup_tray(app.handle())?;
+            agent::start(app.handle().clone());
+            // Spec: the agent starts at Windows login. Only for installed builds.
+            #[cfg(not(debug_assertions))]
+            {
+                use tauri_plugin_autostart::ManagerExt;
+                let _ = app.autolaunch().enable();
+            }
             // If another app already owns the hotkey, keep running without it.
             if let Err(e) = app.global_shortcut().register(quick_capture_shortcut()) {
                 eprintln!("Quick capture hotkey not available: {e}");
@@ -220,6 +274,13 @@ pub fn run() {
             event_update,
             event_archive,
             task_block,
+            reminders_active,
+            reminder_done,
+            reminder_snooze,
+            rules_list,
+            rule_create,
+            rule_set_enabled,
+            rule_delete,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MyLife");
