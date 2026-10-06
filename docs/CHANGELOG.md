@@ -12,3 +12,5 @@
 - System tray icon. Closing the window keeps MyLife running.
 - Scheduler logic (not wired to the agent yet): RRULE repeats in Anchorage time, month-end, quiet hours 10 PM to 7 AM, ladder levels 1 to 3, missed reminders fire once.
 - Rule JSON format parsing and time/offset trigger timing.
+- Windows installer (MSI) built and published to GitHub Releases on every merge to main.
+- App version shown in the sidebar.

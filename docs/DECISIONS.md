@@ -18,3 +18,5 @@ Tanner can change any of these. Newest at the bottom.
 | 11 | 2026-10-06 | Tray agent | The agent runs inside the app process, in the tray. Closing the window hides it. | One process is simpler to install and update. Can split later if needed. |
 | 12 | 2026-10-06 | In-app shortcuts | Alt+1 Today, Alt+2 Tasks, Ctrl+N quick capture. | Spec: keyboard shortcuts for everything. |
 | 13 | 2026-10-06 | Schema | `migrations/0001_init.sql` is the spec schema, copied as-is. | Spec: follow the schema exactly. |
+| 14 | 2026-10-06 | Installing and updating | Every merge to `main` builds an MSI and publishes it as a GitHub Release (`.github/workflows/release.yml`). Version is `0.1.<build number>`. A fixed WiX upgrade code makes each MSI upgrade the last one. | Tanner wants to install and update as work lands. Uses only Tauri's built-in bundler. |
+| 15 | 2026-10-06 | In-app auto-update | Not built. It needs the Tauri updater plugin, which is not on the approved library list. Waiting on Tanner. | Spec build rule 7: no libraries outside the list without approval. |

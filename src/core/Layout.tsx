@@ -1,6 +1,7 @@
 // Three zones: module sidebar, center work area, collapsible agenda panel.
 import { useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getVersion } from "@tauri-apps/api/app";
 import { api } from "./api";
 import { AgendaPanel } from "./AgendaPanel";
 import { QuickCapture } from "./QuickCapture";
@@ -19,6 +20,8 @@ const COMING = ["Calendar", "Chores", "Gym", "Money"];
 export function Layout() {
   const { screen, setScreen, setCaptureOpen, agendaOpen, toggleAgenda } = useUi();
   const qc = useQueryClient();
+  // Shown in the sidebar so you can tell which build is installed.
+  const version = useQuery({ queryKey: ["version"], queryFn: getVersion, staleTime: Infinity });
 
   // Keyboard: Alt+1 / Alt+2 switch screens, Ctrl+N opens quick capture.
   useEffect(() => {
@@ -81,6 +84,7 @@ export function Layout() {
           <button onClick={lock} className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-900">
             Lock
           </button>
+          {version.data && <div className="px-3 pt-2 text-xs text-slate-700">v{version.data}</div>}
         </div>
       </nav>
 

@@ -5,7 +5,18 @@ The full design is in [docs/SPEC.md](docs/SPEC.md).
 
 Status: Phase 1, step 1. See [docs/CHANGELOG.md](docs/CHANGELOG.md).
 
-## Run it on Windows
+## Install
+
+1. Open the [Releases page](https://github.com/Tundra-Ghost/MyLife/releases).
+2. Download the `.msi` from the newest release.
+3. Run it. Windows may say "Windows protected your PC" because the installer isn't code-signed. Click **More info**, then **Run anyway**.
+
+To update, do the same with a newer release. It upgrades in place and keeps your data.
+The version you have shows at the bottom of the sidebar.
+
+A new release is built every time a PR is merged into `main`.
+
+## Build it yourself on Windows
 
 One-time setup:
 
