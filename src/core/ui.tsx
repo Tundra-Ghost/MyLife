@@ -1,5 +1,5 @@
 // Shared small UI pieces.
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Energy } from "./api";
 
@@ -92,4 +92,13 @@ export function Section({ title, children, right }: { title: string; children: R
       {children}
     </section>
   );
+}
+
+/** Calls `onClose` when Esc is pressed. For modals and side panels. */
+export function useEscape(onClose: () => void) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 }

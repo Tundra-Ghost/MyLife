@@ -6,6 +6,11 @@
   --color-brand: #14b8a6;
 }
 
+/* Native controls (date pickers, dropdowns) follow the dark theme. */
+:root {
+  color-scheme: dark;
+}
+
 html,
 body,
 #root {

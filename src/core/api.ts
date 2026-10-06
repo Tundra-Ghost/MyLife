@@ -64,6 +64,36 @@ export interface Today {
   inbox_count: number;
 }
 
+export interface CalEvent {
+  id: string;
+  item_id: string | null;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  rrule: string | null;
+  source: string;
+}
+
+export interface Occurrence {
+  event_id: string;
+  item_id: string | null;
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  repeats: boolean;
+}
+
+export interface EventInput {
+  title: string;
+  starts_at: string;
+  ends_at: string | null;
+  all_day: boolean;
+  rrule: string | null;
+  item_id: string | null;
+}
+
 export interface AppStatus {
   created: boolean;
   unlocked: boolean;
@@ -83,6 +113,13 @@ export const api = {
   addSteps: (id: string, titles: string[]) => invoke<Task[]>("task_add_steps", { id, titles }),
   steps: (id: string) => invoke<Task[]>("task_steps", { id }),
   reschedule: (id: string, date?: string) => invoke<Task>("task_reschedule", { id, date: date ?? null }),
+  events: (from: Date, to: Date) =>
+    invoke<Occurrence[]>("events_range", { from: from.toISOString(), to: to.toISOString() }),
+  event: (id: string) => invoke<CalEvent>("event_get", { id }),
+  createEvent: (event: EventInput) => invoke<CalEvent>("event_create", { event }),
+  updateEvent: (id: string, event: EventInput) => invoke<CalEvent>("event_update", { id, event }),
+  archiveEvent: (id: string) => invoke<void>("event_archive", { id }),
+  blockTask: (id: string, startsAt: Date) => invoke<CalEvent>("task_block", { id, startsAt: startsAt.toISOString() }),
 };
 
 /** Commands reject with a plain string. Turn anything into readable text. */

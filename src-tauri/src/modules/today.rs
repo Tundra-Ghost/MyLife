@@ -5,9 +5,10 @@
 //! the `*_more` counts are above 0.
 
 use chrono::{DateTime, Duration, TimeZone, Utc};
-use rusqlite::{params, Connection};
+use rusqlite::Connection;
 use serde::Serialize;
 
+use super::calendar;
 use super::tasks::{self, Task, TaskView};
 use crate::db::{ids, DbError};
 
@@ -61,22 +62,11 @@ pub fn build(conn: &Connection, now: DateTime<Utc>) -> Result<Today, DbError> {
         .unwrap()
         .with_timezone(&Utc);
     let day_end = day_start + Duration::days(1);
-    let mut stmt = conn.prepare(
-        "SELECT id, title, starts_at, ends_at, all_day FROM events
-         WHERE starts_at < ?2 AND coalesce(ends_at, starts_at) >= ?1
-         ORDER BY all_day DESC, starts_at",
-    )?;
-    let events: Vec<TodayEvent> = stmt
-        .query_map(params![ids::to_iso(day_start), ids::to_iso(day_end)], |r| {
-            Ok(TodayEvent {
-                id: r.get(0)?,
-                title: r.get(1)?,
-                starts_at: r.get(2)?,
-                ends_at: r.get(3)?,
-                all_day: r.get::<_, i64>(4)? != 0,
-            })
-        })?
-        .collect::<Result<_, _>>()?;
+    // Uses the calendar so repeating events and deletes are handled the same way.
+    let events: Vec<TodayEvent> = calendar::occurrences(conn, day_start, day_end)?
+        .into_iter()
+        .map(|o| TodayEvent { id: o.event_id, title: o.title, starts_at: o.starts_at, ends_at: o.ends_at, all_day: o.all_day })
+        .collect();
     let events_more = events.len().saturating_sub(LIST_LIMIT);
 
     Ok(Today {
@@ -96,6 +86,7 @@ mod tests {
     use super::*;
     use crate::db::test_conn;
     use crate::modules::tasks::{create, NewTask, TaskData};
+    use rusqlite::params;
 
     fn now() -> DateTime<Utc> {
         Utc.with_ymd_and_hms(2026, 10, 6, 20, 0, 0).unwrap() // noon in Anchorage

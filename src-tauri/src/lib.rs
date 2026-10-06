@@ -21,6 +21,7 @@ use tauri_plugin_global_shortcut::{Code, GlobalShortcutExt, Modifiers, Shortcut,
 use zeroize::Zeroizing;
 
 use db::{DbError, DbPaths};
+use modules::calendar::{self, Event, EventInput, Occurrence};
 use modules::tasks::{self, NewTask, Task, TaskPatch, TaskView};
 use modules::today::{self, Today};
 
@@ -131,6 +132,42 @@ fn task_reschedule(state: State<AppState>, id: String, date: Option<String>) -> 
     with_db(&state, |c| tasks::reschedule(c, &id, day))
 }
 
+/// All event occurrences that overlap `[from, to)`. Times are UTC ISO strings.
+#[tauri::command]
+fn events_range(state: State<AppState>, from: String, to: String) -> CmdResult<Vec<Occurrence>> {
+    let parse = |s: &str| {
+        chrono::DateTime::parse_from_rfc3339(s).map(|d| d.with_timezone(&Utc)).map_err(|_| format!("Bad time: {s}"))
+    };
+    let (from, to) = (parse(&from)?, parse(&to)?);
+    with_db(&state, |c| calendar::occurrences(c, from, to))
+}
+
+#[tauri::command]
+fn event_get(state: State<AppState>, id: String) -> CmdResult<Event> {
+    with_db(&state, |c| calendar::get(c, &id))
+}
+
+#[tauri::command]
+fn event_create(state: State<AppState>, event: EventInput) -> CmdResult<Event> {
+    with_db(&state, |c| calendar::create(c, &event))
+}
+
+#[tauri::command]
+fn event_update(state: State<AppState>, id: String, event: EventInput) -> CmdResult<Event> {
+    with_db(&state, |c| calendar::update(c, &id, &event))
+}
+
+#[tauri::command]
+fn event_archive(state: State<AppState>, id: String) -> CmdResult<()> {
+    with_db(&state, |c| calendar::archive(c, &id))
+}
+
+/// Drag a task onto the calendar: makes a time block for it.
+#[tauri::command]
+fn task_block(state: State<AppState>, id: String, starts_at: String) -> CmdResult<Event> {
+    with_db(&state, |c| calendar::block_task(c, &id, &starts_at))
+}
+
 /// Spec: Ctrl+Shift+Space opens quick capture from any app.
 fn quick_capture_shortcut() -> Shortcut {
     Shortcut::new(Some(Modifiers::CONTROL | Modifiers::SHIFT), Code::Space)
@@ -177,6 +214,12 @@ pub fn run() {
             task_add_steps,
             task_steps,
             task_reschedule,
+            events_range,
+            event_get,
+            event_create,
+            event_update,
+            event_archive,
+            task_block,
         ])
         .run(tauri::generate_context!())
         .expect("error while running MyLife");

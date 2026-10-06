@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, errorText, type Energy, type Task } from "../../core/api";
-import { Button, useRefresh } from "../../core/ui";
+import { Button, useEscape, useRefresh } from "../../core/ui";
 import { TaskRow } from "./TaskRow";
 
 const field = "w-full rounded-lg bg-slate-900 px-3 py-2 text-sm outline-none ring-1 ring-slate-700 focus:ring-brand";
@@ -17,6 +17,7 @@ export function TaskDetail({ task, onClose }: { task: Task; onClose: () => void 
   const [notes, setNotes] = useState(task.data.notes ?? "");
   const [stepText, setStepText] = useState("");
   const [error, setError] = useState("");
+  useEscape(onClose);
   const steps = useQuery({ queryKey: ["steps", task.id], queryFn: () => api.steps(task.id) });
 
   const toNum = (s: string) => (s.trim() ? Number(s) : null);

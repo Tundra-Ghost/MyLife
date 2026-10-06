@@ -8,14 +8,16 @@ import { QuickCapture } from "./QuickCapture";
 import { TodayView } from "./TodayView";
 import { useUi, type Screen } from "./store";
 import { TasksView } from "../modules/tasks/TasksView";
+import { CalendarView } from "../modules/calendar/CalendarView";
 
 const NAV: { id: Screen; label: string; key: string }[] = [
   { id: "today", label: "Today", key: "1" },
-  { id: "tasks", label: "Tasks", key: "2" },
+  { id: "calendar", label: "Calendar", key: "2" },
+  { id: "tasks", label: "Tasks", key: "3" },
 ];
 
 // Modules that are planned but not built yet. Shown dimmed so the map is clear.
-const COMING = ["Calendar", "Chores", "Gym", "Money"];
+const COMING = ["Chores", "Gym", "Money"];
 
 export function Layout() {
   const { screen, setScreen, setCaptureOpen, agendaOpen, toggleAgenda } = useUi();
@@ -23,7 +25,7 @@ export function Layout() {
   // Shown in the sidebar so you can tell which build is installed.
   const version = useQuery({ queryKey: ["version"], queryFn: getVersion, staleTime: Infinity });
 
-  // Keyboard: Alt+1 / Alt+2 switch screens, Ctrl+N opens quick capture.
+  // Keyboard: Alt+1 to Alt+3 switch screens, Ctrl+N opens quick capture.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.altKey) {
@@ -88,9 +90,12 @@ export function Layout() {
         </div>
       </nav>
 
-      <main className="min-w-0 flex-1 overflow-y-auto p-8">{screen === "today" ? <TodayView /> : <TasksView />}</main>
+      <main className="min-w-0 flex-1 overflow-y-auto p-8">
+        {screen === "today" ? <TodayView /> : screen === "calendar" ? <CalendarView /> : <TasksView />}
+      </main>
 
-      {agendaOpen && <AgendaPanel />}
+      {/* The calendar already shows the day, so the agenda panel steps aside there. */}
+      {agendaOpen && screen !== "calendar" && <AgendaPanel />}
       <QuickCapture />
     </div>
   );

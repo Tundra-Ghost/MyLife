@@ -20,3 +20,8 @@ Tanner can change any of these. Newest at the bottom.
 | 13 | 2026-10-06 | Schema | `migrations/0001_init.sql` is the spec schema, copied as-is. | Spec: follow the schema exactly. |
 | 14 | 2026-10-06 | Installing and updating | Every merge to `main` builds an MSI and publishes it as a GitHub Release (`.github/workflows/release.yml`). Version is `0.1.<build number>`. A fixed WiX upgrade code makes each MSI upgrade the last one. | Tanner wants to install and update as work lands. Uses only Tauri's built-in bundler. |
 | 15 | 2026-10-06 | In-app auto-update | Not built. It needs the Tauri updater plugin, which is not on the approved library list. Waiting on Tanner. | Spec build rule 7: no libraries outside the list without approval. |
+| 16 | 2026-10-06 | Calendar time zone | Calendar grids use the PC's time zone, which is Anchorage on Tanner's PC. Stored times stay UTC. | Simplest correct option for a single-user Windows app. |
+| 17 | 2026-10-06 | Week start | Weeks start on Sunday. | US default. Easy to change later. |
+| 18 | 2026-10-06 | Time-blocking | Drag a task onto the calendar, or click the task and then click a time. Blocks use the task's estimate, or 30 minutes. Dropping on a month day blocks 9 AM. | Click-to-place also works with no mouse drag. |
+| 19 | 2026-10-06 | Editing repeating events | Edits and deletes apply to every occurrence. Single-occurrence edits can come later. | Keeps step 2 small. |
+| 20 | 2026-10-06 | Event delete | Soft delete through a new `archived_at` column on `events` (migration 0002). | Spec hard rule: deletes are soft. |
