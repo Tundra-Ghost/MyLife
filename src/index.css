@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+/* Dark is the default. A light option comes with the settings screen. */
+@theme {
+  --color-accent: #f59e0b; /* The one "needs action" color. */
+  --color-brand: #14b8a6;
+}
+
+/* Native controls (date pickers, dropdowns) follow the dark theme. */
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-950 text-slate-100 antialiased;
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+/* Big, visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}

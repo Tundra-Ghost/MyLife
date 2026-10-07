@@ -1,0 +1,50 @@
+name: Release
+
+# Builds the Windows installer (MSI) on every merge to main and publishes it
+# as a GitHub Release. Download the newest MSI from the Releases page and run
+# it. It upgrades the installed app in place. Your data is kept.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  windows-msi:
+    runs-on: windows-latest
+    env:
+      # MSI versions must go up for an install to upgrade the old one.
+      APP_VERSION: 0.1.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - run: npm ci
+      - name: Stamp version
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const f='src-tauri/tauri.conf.json';const c=JSON.parse(fs.readFileSync(f));c.version=process.env.APP_VERSION;fs.writeFileSync(f,JSON.stringify(c,null,2))"
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: v${{ env.APP_VERSION }}
+          releaseName: MyLife v${{ env.APP_VERSION }}
+          releaseBody: |
+            Download the .msi below and run it. It upgrades MyLife in place and keeps your data.
+            Changes: see docs/CHANGELOG.md at commit ${{ github.sha }}.
+          releaseDraft: false
+          prerelease: false

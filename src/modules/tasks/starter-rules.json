@@ -1,0 +1,9 @@
+[
+  {
+    "name": "Task due today",
+    "trigger": { "type": "offset", "date_field": "task.due_on", "days_before": 0 },
+    "conditions": [],
+    "actions": [{ "type": "notify" }],
+    "max_ladder": 2
+  }
+]
